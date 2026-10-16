@@ -20,6 +20,10 @@ import { openai } from '@ai-sdk/openai';
 // npm i @ai-sdk/google
 import { google } from '@ai-sdk/google';
 
+//Openrouter:
+// npm i @openrouter/ai-sdk-provider 
+import { openrouter } from '@openrouter/ai-sdk-provider';
+
 // Ollama:
 // npm i ollama-ai-provider-v2
 // A diferencia de los anteriores, este es un proveedor comunitario.
@@ -38,5 +42,10 @@ export const model = groq('openai/gpt-oss-20b');
 // Gemini:
 // export const model = google('gemini-2.5-flash');
 
+//Openrouter:
+//export const model = openrouter('openrouter/free');  
+
 // Ollama:
 // export const model = ollama('gpt-oss');
+
+
