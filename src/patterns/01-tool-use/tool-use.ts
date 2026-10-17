@@ -90,10 +90,10 @@ async function withoutTools() {
 
 const findCoursesTool = tool({
     description:
-    'Buscar cursos en el catalogo de devtalles por texto ' +
-    'por titulo o por nivel. Utiliza siempre antes de responder ' +
-    'cualquier pregunta sobre cursos, precios, cantidad de alumnos '+ 
-    'o cualquier informacion sobre los cursos del catalogo.',
+        'Buscar cursos en el catalogo de devtalles por texto ' +
+        'por titulo o por nivel. Utiliza siempre antes de responder ' +
+        'cualquier pregunta sobre cursos, precios, cantidad de alumnos '+
+        'o cualquier informacion sobre los cursos del catalogo.',
     inputSchema: z.object({
         text: z
         .string()
@@ -101,6 +101,7 @@ const findCoursesTool = tool({
         .describe('Término de búsqueda, por ejemplo: "Typescript" o "NestJS".'),
         level: z
         .enum(['basic', 'intermediate', 'advanced'])
+        .optional()
         .describe('Nivel de los cursos a buscar.'),
     }),
     execute: async function ({ text, level }) {
@@ -117,13 +118,40 @@ const findCoursesTool = tool({
     },
 });
 
+async function withTools() {
+    const tracer = createTracer('Con Herramientas');
+
+    const { text } = await generateText({
+        model,
+        prompt: QUESTION,
+        tools: {
+            findCoursesTool ,
+        },
+        // Circuit Breaker
+        stopWhen: stepCountIs(6),
+        instructions:
+            'Eres un asistente del catálogo de cursos de devtalles. ' +
+            ' No inventes precios, duraciones ni nombres de cursos. ' +
+            ' Consúltalos siempre con las herramientas disponibles. ',
+        onStepEnd: tracer.onStepFinish,
+    });
+
+    console.log(`Respuesta: ${text}`, text.green);
+    console.log('Verificar la respuesta en el catalogo')
+
+    return tracer.summary();
+}
+
 
 export async function toolUseMain() {
     const resultWithoutTools = await withoutTools();
 
+    const resultWithTools = await withTools();
+
     console.log('\n=== Comparativa ===');
 
     console.table({
-        'Respuesta sin herramientas': resultWithoutTools
+        'Respuesta sin herramientas': resultWithoutTools,
+        'Respuesta con herramientas': resultWithTools,
     })
 }
