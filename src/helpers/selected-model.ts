@@ -43,7 +43,7 @@ import { ollama } from 'ollama-ai-provider-v2';
 // export const model = google('gemini-2.5-flash');
 
 //Openrouter:
-export const model = openrouter('openrouter/free');
+export const model = openrouter('nvidia/nemotron-3-super-120b-a12b:free');
 // Ollama:
 // export const model = ollama('gpt-oss');
 

@@ -195,22 +195,92 @@ async function withoutPlanning() {
 // ---------------------------------------------------------------------------
 // B) CON PLANIFICACIÓN — primero el plan, luego la ejecución
 // ---------------------------------------------------------------------------
-// TODO: 
+
+const stepSchema = z.object({
+    goal: z.string().describe('Objetivo del paso en una frase concisa.'),
+    reason: z.string()
+    .describe('¿Por qué este paso es prioritario? y ¿Por que va en esta posición?')
+});
+
+const planSchema = z.object({
+    steps: z
+    .array(stepSchema)
+    .min(2)
+    .max(15)
+    .describe('Secuencia de operaciones tácticas, Cada una es para un objetivo'),
+});
 
 
+async function buildPlan(tracer:ReturnType<typeof createTracer>) {
+    const {text, output} = await generateText({
+        model,
+        output: Output.object({
+            schema: planSchema,
+        }),
+        prompt: MISSION,
+        instructions:
+            'Eres un coordinador de operaciones tácticas de alto nivel.' +
+            'Tu tarea es analizar el escenario y proponer un plan de acción detallado.',
+        onStepEnd: tracer.onStepFinish,
+    });
+
+    return output.steps;
+
+}
+
+
+async function withPlanning() {
+    console.log('\n═══ B) CON PLANIFICACIÓN ═══\n'.blue);
+
+    const tracer = createTracer('con-planificación');
+
+    // 1. Planificación y construir
+    const steps = await buildPlan(tracer);
+    console.log('Steps: '.red, steps);
+    // 2. Ejecutar paso a paso
+    const findings: string[] = [];
+
+    for (const [index, step] of steps.entries()) {
+        console.log(`Step -> ${index + 1}: ${step.goal}`.blue);
+        const {text} = await generateText({
+            model,
+            instructions: 'Resuelve unicamente el paso indicado. '+
+            'No te adelantes y no integres pasos, solo resuelve lo solicitado',
+            prompt:`Misión Original: ${MISSION}\n\n`+
+            (findings.length
+                ? `Resueltos hasta ahora: ${findings.join('\n---\n')}\n\n`
+                : ''+
+                `Paso Actual: ${step.goal}\n\n`),
+            onStepEnd: tracer.onStepFinish,
+        });
+        findings.push(`[${step.goal}]\n\n${text.trim()}`);
+    }
+    // 3. Sintetizar e integrar todos los pasos anteriores
+    const {text: finalPlan} = await generateText({
+        model,
+        instructions: 'Integra los resultados parciales en un operativo final.'+
+        'Se concreto en el orden de intervención y de prioridades.',
+        prompt: `MISIÓN: ${MISSION}\n\n`+
+        `RESULTADOS PARCIALES:\n${findings.join('\n---\n')}`,
+        onStepEnd: tracer.onStepFinish,
+    });
+    console.log('\nPlan final: ' + finalPlan.green);
+
+    return tracer.summary();
+}
 
 // ---------------------------------------------------------------------------
 // MAIN
 // ---------------------------------------------------------------------------
 // TODO: 
 export async function planningMain() {
-    const a = await withoutPlanning();
-    // const b = await withPlanning();
+    //const a = await withoutPlanning();
+     const b = await withPlanning();
 
     console.log('\n═══ COMPARATIVA ═══\n'.blue);
     console.table({
-        'Sin planificación': a,
-        // 'Con planificación': b,
+        //'Sin planificación': a,
+         'Con planificación': b,
     });
 
 
