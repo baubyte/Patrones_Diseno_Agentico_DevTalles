@@ -86,6 +86,7 @@ async function withoutTools() {
 }
 
 //! ======= Implementación con tools
+
 //* Tool #1 Find Courses
 
 const findCoursesTool = tool({
@@ -118,6 +119,50 @@ const findCoursesTool = tool({
     },
 });
 
+//* Tool #2 Calculate Totals
+
+const calculateTotalsTool = tool({
+    description:
+        'Calcula el precio total de una lista de cursos aplicando un descuento porcentual.' +
+        'Utilizala simopre para cualquier operación aritmética no calcules mentalmente.',
+    inputSchema: z.object({
+        ids: z
+        .array(z.string()
+        .describe('IDs de los cursos Ej: ["ts-45454", "dkr-15454"]')),
+        discountPercent: z
+        .number()
+        .min(0)
+        .max(70)
+        .default(0)
+        .describe('Porcentaje de descuento a aplicar'),
+    }),
+    execute: async function ({ ids, discountPercent }) {
+        const foundCourses = COURSE_CATALOG.filter(
+            (course) => ids.includes(course.id)
+        );
+
+       const notFound = ids.filter(
+            (id) => !COURSE_CATALOG.some((course) => course.id === id)
+       );
+
+        const subTotal = foundCourses.reduce(
+            (total, course) => total + course!.priceUSD, 
+            0
+        );
+
+        const discount = subTotal * (discountPercent / 100);
+
+        const total = subTotal - discount;
+
+        return {
+            notFound,
+            subTotal: Number(subTotal.toFixed(2)),
+            discount: Number(discount.toFixed(2)),
+            total: Number(total.toFixed(2)),
+        };
+    },
+})
+
 async function withTools() {
     const tracer = createTracer('Con Herramientas');
 
@@ -125,7 +170,8 @@ async function withTools() {
         model,
         prompt: QUESTION,
         tools: {
-            findCoursesTool ,
+            findCoursesTool,
+            calculateTotalsTool,
         },
         // Circuit Breaker
         stopWhen: stepCountIs(6),
@@ -144,14 +190,14 @@ async function withTools() {
 
 
 export async function toolUseMain() {
-    const resultWithoutTools = await withoutTools();
+    //const resultWithoutTools = await withoutTools();
 
     const resultWithTools = await withTools();
 
     console.log('\n=== Comparativa ===');
 
     console.table({
-        'Respuesta sin herramientas': resultWithoutTools,
+        //'Respuesta sin herramientas': resultWithoutTools,
         'Respuesta con herramientas': resultWithTools,
     })
 }
