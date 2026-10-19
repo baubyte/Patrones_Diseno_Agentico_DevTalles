@@ -30,7 +30,7 @@ import { openrouter } from '@openrouter/ai-sdk-provider';
 import { ollama } from 'ollama-ai-provider-v2';
 
 // Groq:
-export const model = groq('openai/gpt-oss-20b');
+//export const model = groq('openai/gpt-oss-20b');
 //export const model = groq('openai/gpt-oss-120b');
 
 // Anthropic:
@@ -43,7 +43,7 @@ export const model = groq('openai/gpt-oss-20b');
 // export const model = google('gemini-2.5-flash');
 
 //Openrouter: nvidia/nemotron-3-super-120b-a12b:free minimax/minimax-m3.1-flash:free
-//export const model = openrouter('openrouter/free');
+export const model = openrouter('openrouter/free');
 // Ollama:
 // export const model = ollama('gpt-oss');
 
