@@ -34,8 +34,8 @@ La mayoría de los tutoriales enseñan a conectar librerías como "cajas negras"
 - **Lenguaje:** [TypeScript 5+](https://www.typescriptlang.org/) bajo módulos nativos (ESM).
 - **Orquestación y Modelos:** [Vercel AI SDK (`ai`)](https://sdk.vercel.ai/) utilizando `generateText`, `Output.object`, `tool` y `stepCountIs`.
 - **Esquemas y Contratos:** [Zod](https://zod.dev/) para validar inputs/outputs y forzar *Structured Outputs*.
-- **Trazabilidad:** Sistema interno de tracer en [`src/helpers/`](file:///src/helpers/) para observabilidad de llamadas, costes y finalización.
-- **Capa Multi-proveedor:** Centralizada en [`src/helpers/selected-model.ts`](file:///src/helpers/selected-model.ts), permitiendo intercambiar instantáneamente entre:
+- **Trazabilidad:** Sistema interno de tracer en [`src/helpers/`](./src/helpers/) para observabilidad de llamadas, costes y finalización.
+- **Capa Multi-proveedor:** Centralizada en [`src/helpers/selected-model.ts`](./src/helpers/selected-model.ts), permitiendo intercambiar instantáneamente entre:
   - ⚡ **Groq** (`@ai-sdk/groq`) — Ultra baja latencia.
   - 🧠 **Anthropic Claude** (`@ai-sdk/anthropic`) — Razonamiento refinado.
   - 🌐 **OpenAI** (`@ai-sdk/openai`) — Modelos GPT-4o / GPT-5.
@@ -66,7 +66,7 @@ npm run dev
 > **Leyenda:** `[x]` Completada · `[~]` En curso / Actual · `[ ]` Pendiente
 
 ```
-Progreso General: [██████████░░░░░░░░░░░░] 6 / 15 Módulos Principales
+Progreso General: [████████████░░░░░░░░] 9 / 15 Módulos Principales
 ```
 
 ---
@@ -84,10 +84,10 @@ Progreso General: [██████████░░░░░░░░░░�
 ### 🔹 Módulo 3: Entorno y Abstracción de Modelos
 > **Objetivo:** Preparar la arquitectura base desacoplada del proveedor de IA, permitiendo evaluar el mismo patrón en distintos motores según coste y capacidades.
 
-- **Archivos clave:** [`src/helpers/selected-model.ts`](file:///src/helpers/selected-model.ts), [`src/helpers/index.ts`](file:///src/helpers/index.ts)
+- **Archivos clave:** [`src/helpers/selected-model.ts`](./src/helpers/selected-model.ts), [`src/helpers/index.ts`](./src/helpers/index.ts)
 - **Estado:**
   - [x] Configuración de proyecto TypeScript + ESM
-  - [~] Arquitectura de carpetas y helpers de trazabilidad
+  - [x] Arquitectura de carpetas y helpers de trazabilidad
   - [x] Integración de Groq, Anthropic, OpenAI, Google Gemini y Ollama
 
 ---
@@ -96,7 +96,7 @@ Progreso General: [██████████░░░░░░░░░░�
 > **Problema que resuelve:** Los LLMs tienen conocimiento congelado en el tiempo y sufren de alucinaciones en aritmética y catálogos privados.  
 > **Mecanismo:** El modelo recibe herramientas fuertemente tipadas mediante schemas Zod (`findCoursesTool`, `calculateTotalsTool`). Un **Circuit Breaker** (`stepCountIs(6)`) previene bucles infinitos de llamadas.
 
-- **Código implementado:** [`src/patterns/01-tool-use/tool-use.ts`](file:///src/patterns/01-tool-use/tool-use.ts)
+- **Código implementado:** [`src/patterns/01-tool-use/tool-use.ts`](./src/patterns/01-tool-use/tool-use.ts)
 - **Hallazgo clave:** Sin herramientas, el modelo inventa cursos y calcula precios de memoria con total confianza; con herramientas, consulta fuentes reales y delega el cómputo exacto.
 - **Estado:**
   - [x] Sección 4: Patrón Uso de Herramientas (15 - 20)
@@ -110,7 +110,7 @@ Progreso General: [██████████░░░░░░░░░░�
 > 2. **Ejecución paso a paso:** Resolver cada paso de forma aislada alimentando los hallazgos previos (`findings`).
 > 3. **Síntesis final:** Unificar los resultados consolidados en la orden definitiva.
 
-- **Código implementado:** [`src/patterns/02-planning/planning.ts`](file:///src/patterns/02-planning/planning.ts)
+- **Código implementado:** [`src/patterns/02-planning/planning.ts`](./src/patterns/02-planning/planning.ts)
 - **Tradeoff observado:** Cuesta más tokens y latencia, pero evita fallos de lógica y garantiza el cumplimiento estricto de prioridades.
 - **Estado:**
   - [x] Sección 5: Patrón Planeación (22 - 29)
@@ -125,35 +125,52 @@ Progreso General: [██████████░░░░░░░░░░�
 > - **C) Reflexión con rúbrica:** Crítica estricta contra una lista exhaustiva con evidencia literal (`criticSchema`), iterando hasta cumplir el 100% de los puntos o alcanzar un tope de iteraciones.
 > - **Juez programático:** Auditoría determinista en código (sin LLM) como fuente imparcial de verdad.
 
-- **Código implementado:** [`src/patterns/03-reflection/reflection.ts`](file:///src/patterns/03-reflection/reflection.ts)
+- **Código implementado:** [`src/patterns/03-reflection/reflection.ts`](./src/patterns/03-reflection/reflection.ts)
 - **Estado:**
   - [x] Sección 6: Patrón Reflexión (31 - 38)
 
 ---
 
 ### 🔹 Módulo 7: Patrón 04 — ReAct (Reasoning + Acting)
-> **Concepto:** Ciclos iterativos de **Pensamiento (Thought) → Acción (Tool Call) → Observación (Observation)** donde el modelo decide su siguiente paso en base al resultado dinámico del paso anterior.
+> **Problema que resuelve:** Imposibilidad de planificar secuencias de antemano cuando cada paso depende del resultado dinámico del paso previo, o cuando los datos iniciales son ambiguos y requieren inspección en caliente.  
+> **Mecanismo:** Ciclos iterativos continuos de **Pensamiento (Thought) → Acción (Tool Call) → Observación (Observation)**. El modelo razona, ejecuta una herramienta, evalúa la respuesta obtenida y decide la siguiente acción hasta cumplir la meta o alcanzar el límite de pasos (`stepCountIs`).
 
-- **Retos del patrón:** Prevención de loops infinitos, pérdida de directriz y gestión del presupuesto de tokens.
+- **Código implementado:** [`src/patterns/04-reAct/reAct-loop.ts`](./src/patterns/04-reAct/reAct-loop.ts), [`src/patterns/04-reAct/reAct-tarea.ts`](./src/patterns/04-reAct/reAct-tarea.ts)
+- **Casos prácticos abordados:**
+  1. **Bucle de escalación en organigrama (`reAct-loop.ts`):** Aprobación de presupuestos subiendo por la jerarquía empresarial; la cadena es de longitud desconocida porque el supervisor inmediato solo se descubre dentro de la ficha del empleado consultado.
+  2. **Resolución de ambigüedad con API real (`reAct-tarea.ts`):** Consulta del clima en Ottawa (Canadá) usando la API abierta de Open-Meteo. La geocodificación inicial devuelve un resultado válido pero equivocado (otra de las 8 Ottawas del mundo); el agente observa la discrepancia y reformula su llamada con coordenadas precisas.
 - **Estado:**
-  - [ ] Sección 7: Patrón de diseño ReAct (40 - 46)
+  - [x] Sección 7: Patrón de diseño ReAct (40 - 46)
 
 ---
 
 ### 🔹 Módulo 8: Patrón 05 — Prompt Chaining (Encadenamiento de Prompts)
-> **Concepto:** Descomponer un flujo en una tubería de etapas secuenciales con **Compuertas de Validación (Approval Gates)** entre etapas. Si una etapa no pasa la puerta de calidad, el flujo se detiene o se reintenta antes de gastar recursos en la siguiente.
+> **Problema que resuelve:** Los LLMs operan sobre tokens, no caracteres. Por diseño, no saben contar letras ni respetar límites estrictos de longitud (p. ej., un tweet de máximo 280 caracteres), sin importar cuán enfático sea el prompt.  
+> **Mecanismo:** Descomponer el flujo en eslabones independientes protegidos por **Compuertas de Validación (Approval Gates)** programáticas:
+> 1. **Eslabón 1 (Generador):** Redacta el borrador inicial a partir del brief.
+> 2. **Gate determinista:** Valida en código (`text.length`) límites mínimos y máximos.
+> 3. **Eslabón 2 (Ajustador/Recortador):** Si no pasa la compuerta, se retroalimenta al modelo indicándole exactamente cuántos caracteres sobran o faltan.
+> 4. **Fallback determinista:** Si se agota el tope de reintentos (`MAX_RETRIES`), el código recorta limpiamente por palabra para garantizar el cumplimiento incondicional.
 
-- **Retos del patrón:** Cuellos de botella en la cadena, degradación de datos entre eslabones y comparación de modelos pequeños vs. fuertes.
+- **Código implementado:** [`src/patterns/05-prompt-chaining/prompt-chaining.ts`](./src/patterns/05-prompt-chaining/prompt-chaining.ts)
+- **Hallazgo clave:** Asimetría cognitiva: lo que un LLM no puede evaluar con certeza (contar caracteres exactos), una línea de código (`text.length`) lo audita al 100%. La compuerta programática no sólo mejora el resultado: garantiza el contrato.
 - **Estado:**
-  - [ ] Sección 8: Patrón Prompt Chaining (48 - 55)
+  - [x] Sección 8: Patrón Prompt Chaining (48 - 55)
 
 ---
 
 ### 🔹 Módulo 9: Patrón 06 — Plan and Execute (Planificar y Ejecutar)
-> **Concepto:** A diferencia de ReAct (que decide un paso ciego a la vez), este patrón separa explícitamente un **Planificador Macro** (que crea la hoja de ruta completa) de un **Ejecutor Micro** (que ejecuta cada tarea). Si la realidad cambia, se detona un re-planificador.
+> **Problema que resuelve:** En tareas deterministas y predecibles, el patrón ReAct desperdicia excesivas llamadas al LLM al consultar al modelo tras cada tool call individual.  
+> **Mecanismo:** Desacoplar radicalmente la planificación de la ejecución:
+> 1. **Planificador Macro (LLM):** En una sola llamada estructurada (`Output.object` con `planSchema`), diseña la lista completa de acciones a ejecutar.
+> 2. **Ejecutor Ciego (Código):** El runtime de TypeScript itera y ejecuta todas las herramientas en serie o paralelo sin invocar al LLM entre pasos.
+> 3. **Sintetizador (LLM):** Una segunda y última llamada consolida las evidencias recolectadas en el reporte final.
+> - **Límite del patrón:** Falla si un paso subsiguiente requiere forzosamente información descubierta en un paso previo (para lo cual se debe recurrir a ReAct o re-planificación dinámica).
 
+- **Código implementado:** [`src/patterns/06-plan-and-execute/plan-execute.ts`](./src/patterns/06-plan-and-execute/plan-execute.ts)
+- **Caso práctico abordado:** Auditoría de seguridad e integridad de celdas y bitácoras en una prisión de alta seguridad tras una fuga de supervillanos.
 - **Estado:**
-  - [ ] Sección 9: Patrón Plan and Execute (57 - 63)
+  - [x] Sección 9: Patrón Plan and Execute (57 - 63)
 
 ---
 
@@ -161,7 +178,7 @@ Progreso General: [██████████░░░░░░░░░░�
 > **Concepto:** En lugar de diseñar decenas de herramientas estáticas en JSON, el agente redacta scripts ejecutables (TypeScript/Python/Bash) que se corren en un entorno aislado (Sandbox). Ideal para análisis de datos, cálculos masivos o transformaciones complejas.
 
 - **Estado:**
-  - [ ] Sección 10: Patrón Code Act (65 - 71)
+  - [~] Sección 10: Patrón Code Act (65 - 71) *(Próximo módulo)*
 
 ---
 
@@ -211,6 +228,7 @@ A lo largo del código de los patrones se integran primitivas esenciales para pr
 | **Circuit Breakers** | Límites máximos de iteraciones y tokens para evitar bucles infinitos (`stepCountIs`). |
 | **Structured Outputs** | Garantía de esquemas mediante `zod` y `Output.object` para evitar respuestas rotas. |
 | **Auditores Deterministas** | Funciones regulares en TypeScript que auditan al modelo sin sesgos de LLM. |
+| **Approval Gates & Fallbacks** | Validación estricta con compuertas en código (ej. longitud, tipos) y recortes deterministas si se supera el tope de reintentos. |
 | **Isolation & Context Guarding** | Mantener prompts enfocados para evitar la dilución del contexto. |
 
 ---
