@@ -10,6 +10,7 @@ import { planAndExecuteMain } from './patterns/06-plan-and-execute/plan-execute.
 import { codeActMain } from './patterns/07-code-act/code-act.js';
 import { routingMain } from './patterns/08-routing/multi-routing.js';
 import { orchestratorWorkersMain } from './patterns/09-orchestrator/orchestrator.js';
+import { parallelizationMain } from './patterns/10-parallelization/parallelization.js';
 
 console.clear();
 
@@ -33,4 +34,6 @@ console.clear();
 
 //await routingMain();
 
-await orchestratorWorkersMain();
+//await orchestratorWorkersMain();
+
+await parallelizationMain();
