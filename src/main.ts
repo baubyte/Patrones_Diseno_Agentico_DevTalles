@@ -9,6 +9,7 @@ import { promptChainingMain } from './patterns/05-prompt-chaining/prompt-chainin
 import { planAndExecuteMain } from './patterns/06-plan-and-execute/plan-execute.js';
 import { codeActMain } from './patterns/07-code-act/code-act.js';
 import { routingMain } from './patterns/08-routing/multi-routing.js';
+import { orchestratorWorkersMain } from './patterns/09-orchestrator/orchestrator.js';
 
 console.clear();
 
@@ -30,4 +31,6 @@ console.clear();
 
 // await codeActMain();
 
-await routingMain();
+//await routingMain();
+
+await orchestratorWorkersMain();
