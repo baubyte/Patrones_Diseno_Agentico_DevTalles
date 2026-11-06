@@ -37,20 +37,34 @@ const RESEARCH_REQUEST =
 // LA HERRAMIENTA DE BÚSQUEDA — una sola, genérica
 // ---------------------------------------------------------------------------
 
-const RAWG_API_KEY = process.env.RAWG_API_KEY ?? '';
+type Platform = 'pc' | 'playstation' | 'xbox' | 'nintendo';
 
-/**
- * IDs de plataforma padre en RAWG. Verifícalos con:
- * GET https://api.rawg.io/api/platforms/lists/parents?key=...
- */
-const PLATFORMS = {
-    pc: 1,
-    playstation: 2,
-    xbox: 3,
-    nintendo: 7,
-} as const;
-
-type Platform = keyof typeof PLATFORMS;
+const MOCK_GAMES: Record<
+    Platform,
+    Array<{ title: string; released: string; hype: number }>
+> = {
+    pc: [
+        { title: 'Hades II', released: '2025-04-15', hype: 9500 },
+        { title: 'S.T.A.L.K.E.R. 2: Heart of Chornobyl', released: '2025-05-10', hype: 8800 },
+        { title: 'Civilization VII', released: '2025-06-01', hype: 7200 },
+        { title: 'Frostpunk 2', released: '2025-04-20', hype: 6900 },
+    ],
+    playstation: [
+        { title: 'Death Stranding 2: On The Beach', released: '2025-05-25', hype: 9800 },
+        { title: 'Ghost of Yōtei', released: '2025-06-15', hype: 9400 },
+        { title: 'Monster Hunter Wilds', released: '2025-04-28', hype: 9100 },
+    ],
+    xbox: [
+        { title: 'Fable', released: '2025-06-10', hype: 8900 },
+        { title: 'Avowed', released: '2025-04-18', hype: 8200 },
+        { title: 'Doom: The Dark Ages', released: '2025-05-30', hype: 8700 },
+    ],
+    nintendo: [
+        { title: 'Metroid Prime 4: Beyond', released: '2025-05-12', hype: 9600 },
+        { title: 'Pokémon Legends: Z-A', released: '2025-06-20', hype: 9300 },
+        { title: 'Mario & Luigi: Brothership', released: '2025-04-22', hype: 7800 },
+    ],
+};
 
 const searchUpcomingGames = tool({
     description:
@@ -62,35 +76,15 @@ const searchUpcomingGames = tool({
         days: z.number().min(1).max(365).default(90),
         limit: z.number().min(3).max(20).default(10),
     }),
-    execute: async ({ platform, days, limit }) => {
-        const from = new Date();
-        const to = new Date(from.getTime() + days * 86_400_000);
-        const iso = (date: Date) => date.toISOString().slice(0, 10);
+    execute: async ({ platform, limit }) => {
+        // Simulamos latencia de red (400ms) para evaluar paralelismo vs serie
+        await new Promise((resolve) => setTimeout(resolve, 400));
 
-        const params = new URLSearchParams({
-            key: RAWG_API_KEY,
-            dates: `${iso(from)},${iso(to)}`,
-            parent_platforms: String(PLATFORMS[platform as Platform]),
-            ordering: '-added',
-            page_size: String(limit),
-        });
-
-        const response = await fetch(`https://api.rawg.io/api/games?${params}`);
-        if (!response.ok) return { error: `RAWG respondió ${response.status}` };
-
-        const data = (await response.json()) as {
-            results: { name: string; released: string | null; added: number }[];
-        };
+        const games = (MOCK_GAMES[platform] || []).slice(0, limit);
 
         return {
             platform,
-            games: data.results
-                .filter((game) => game.released)
-                .map((game) => ({
-                    title: game.name,
-                    released: game.released,
-                    hype: game.added,
-                })),
+            games,
         };
     },
 });
@@ -210,10 +204,10 @@ async function integrateFindings(
         prompt:
             `Petición original: ${RESEARCH_REQUEST} \n\n` +
             'Hallazgos por tema: \n' +
-            JSON.stringify(findings),
-        // findings
-        //   .map((item) => `--- ${item.topic} --- \n ${item.findings}`)
-        //   .join('\n\n'),
+            //JSON.stringify(findings),
+            findings
+            .map((item) => `--- ${item.topic} --- \n ${item.findings}`)
+            .join('\n\n'),
         onStepEnd: tracer.onStepFinish,
     });
 
@@ -270,19 +264,12 @@ async function planExecuteIntegrate() {
 // ---------------------------------------------------------------------------
 
 export async function parallelizationMain() {
-    if (!RAWG_API_KEY) {
-        console.error(
-            '\n  Falta RAWG_API_KEY (gratuita en rawg.io/apidocs).\n'.red
-        );
-        return;
-    }
-
-    const a = await singleAgent();
+    // const a = await singleAgent();
     const b = await planExecuteIntegrate();
 
     console.log('\n═══ COMPARATIVA ═══\n'.blue);
     console.table({
-        'A) Agente único': a,
+        // 'A) Agente único': a,
         'B) Plan + paralelo + integración': b,
     });
 }
