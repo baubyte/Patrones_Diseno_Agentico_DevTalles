@@ -166,6 +166,8 @@ const TOOLS = { findPurchase, issueRefund };
  *
  * Devolver `undefined` = ejecuta sin preguntar.
  * Devolver 'user-approval' = frena y pide tu decisión.
+ * Debe tener un propiedad que haga referencia a la tool que requiere aprobación.
+ * y los argumentos que se le enviarán a la tool.
  *
  */
 const TOOL_APPROVAL = {
