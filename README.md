@@ -7,6 +7,7 @@
 ![Vercel AI SDK](https://img.shields.io/badge/Vercel_AI_SDK-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![Zod](https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white)
 ![DevTalles](https://img.shields.io/badge/DevTalles-Course-blueviolet?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Completado%20100%25-brightgreen?style=for-the-badge)
 
 <p align="center">
   <b>Exploración práctica, métricas de observabilidad y criterios de ingeniería</b><br>
@@ -66,7 +67,7 @@ npm run dev
 > **Leyenda:** `[x]` Completada · `[~]` En curso / Actual · `[ ]` Pendiente
 
 ```
-Progreso General: [████████████░░░░░░░░] 9 / 15 Módulos Principales
+Progreso General: [████████████████████] 15 / 15 Módulos Principales (100% Completado 🎉)
 ```
 
 ---
@@ -175,47 +176,91 @@ Progreso General: [████████████░░░░░░░░]
 ---
 
 ### 🔹 Módulo 10: Patrón 07 — CodeAct (Código como Acción)
-> **Concepto:** En lugar de diseñar decenas de herramientas estáticas en JSON, el agente redacta scripts ejecutables (TypeScript/Python/Bash) que se corren en un entorno aislado (Sandbox). Ideal para análisis de datos, cálculos masivos o transformaciones complejas.
+> **Problema que resuelve:** En Tool Use tradicional (JSON), no existen estructuras de control (`for`, `if`, variables intermedias ni acumuladores). Resolver problemas combinatoriales, filtros masivos o transformaciones complejas exige un round-trip HTTP por cada iteración, agotando el presupuesto de pasos (`stepCountIs`) sin poder terminar.  
+> **Mecanismo:** La acción generada por el modelo no es un objeto JSON estático, sino **código ejecutable**. El LLM escribe un script completo (JavaScript/TypeScript) que se ejecuta en un entorno aislado (`node:vm`).
+> - **A) Sin CodeAct:** Herramientas atómicas encadenadas. Falla inevitablemente por límite de pasos (~30 pasos requeridos vs. 10 disponibles en el presupuesto).
+> - **B) Con CodeAct:** El modelo sintetiza el algoritmo y resuelve el problema en una sola llamada y un solo paso.
+> - **Vulnerabilidad y Coste Oculto:** Sin sandbox real con aislamiento de procesos y recursos, *"CodeAct no es un patrón agéntico: es una vulnerabilidad de ejecución remota (RCE) con buenas intenciones"*.
 
+- **Código implementado:** [`src/patterns/07-code-act/code-act.ts`](./src/patterns/07-code-act/code-act.ts)
+- **Caso práctico:** Fuga masiva de villanos de prisión: emparejar a cada fugitivo con su único especialista neutralizador ordenado por nivel de amenaza.
 - **Estado:**
-  - [~] Sección 10: Patrón Code Act (65 - 71) *(Próximo módulo)*
+  - [x] Sección 10: Patrón Code Act (65 - 71)
 
 ---
 
 ### 🔹 Módulo 11: Patrón 08 — Router & Specialist (Enrutamiento y Especialistas)
-> **Concepto:** Evitar el antipatrón del "Agente Todólogo". Un agente clasificador ligero (Router) evalúa la intención del usuario y la redirige al agente especialista que posee el contexto, instrucciones y herramientas óptimas para ese dominio.
+> **Problema que resuelve:** El antipatrón del "Agente Todólogo". Inyectar decenas de herramientas en un solo agente diluye el contexto, dispara la probabilidad de alucinación y aumenta exponencialmente la confusión en la selección de tools.  
+> **Mecanismo:** Arquitectura de centralita telefónica.
+> 1. **Clasificador (Router):** Evalúa la intención inicial mediante salida estructurada (`Output.object` con `routingSchema`), transfiere la llamada a **un único especialista** y se retira definitivamente.
+> 2. **Especialistas Aislados:** Cada departamento (`ventas`, `soporte`, `facturación`) posee un subconjunto estrictamente disjunto de herramientas.
+> - **Garantía estructural:** Si el router transfiere al departamento equivocado, la operación no puede resolverse porque nadie allí tiene la herramienta adecuada. Es imposible por construcción.
 
+- **Código implementado:** [`src/patterns/08-routing/multi-routing.ts`](./src/patterns/08-routing/multi-routing.ts)
+- **Caso práctico:** Centralita de atención al cliente de DevTalles: enrutamiento de consultas entre catálogo de cursos, tickets de soporte o emisión de facturas.
 - **Estado:**
-  - [ ] Sección 11: Patrón Enrutamiento y Especialistas (73 - 79)
+  - [x] Sección 11: Patrón Enrutamiento y Especialistas (73 - 79)
 
 ---
 
 ### 🔹 Módulo 12: Patrón 09 — Orchestrator & Workers (Orquestador y Trabajadores)
-> **Concepto:** Topología jerárquica donde un Orquestador Central descompone una misión global, asigna subtareas a múltiples agentes subordinados (Workers) y consolida la entrega final.
+> **Problema que resuelve:** Cuando una petición de usuario requiere atender múltiples áreas simultáneamente (ej. "quiero el catálogo de Flutter, abrir un ticket de acceso y pedir mi factura"), el Router simple fracasa estructuralmente (techo: resuelve como máximo 1 de 3 partes porque se retira tras transferir).  
+> **Mecanismo:** Un solo bucle agéntico donde el **Orquestador Central** tiene como herramientas a los propios **Workers especializados**.
+> 1. El orquestador analiza la petición completa y coordina las llamadas necesarias a los workers.
+> 2. Cada worker ejecuta su tool y devuelve un identificador de prueba único (`catalogId`, `ticketId`, `invoiceId`).
+> 3. El orquestador verifica las evidencias retornadas y redacta la respuesta unificada final para el cliente.
+> - **Diferencia vs Router:** El Router delega una vez y suelta el control; el Orquestador permanece en la conversación hasta verificar y consolidar todas las subtareas.
 
+- **Código implementado:** [`src/patterns/09-orchestrator/orchestrator.ts`](./src/patterns/09-orchestrator/orchestrator.ts)
 - **Estado:**
-  - [ ] Sección 12: Patrón Orquestador y Trabajadores (81 - 87)
+  - [x] Sección 12: Patrón Orquestador y Trabajadores (81 - 87)
 
 ---
 
 ### 🔹 Módulo 13: Patrón 10 — Parallelization (Paralelización)
-> **Concepto:** Ejecución concurrente de agentes o sub-prompts cuando las tareas son ortogonales e independientes (ej. consultar múltiples fuentes, analizar distintos ángulos de un problema o votar en consenso), reduciendo la latencia de minutos a segundos.
+> **Problema que resuelve:** Alta latencia en investigaciones independientes. La ejecución secuencial acumula los tiempos de cada búsqueda en serie (`t_total = t_1 + t_2 + ... + t_n`).  
+> **Mecanismo:** Flujo estructurado en 3 fases:
+> 1. **Planificar:** Un agente descompone la solicitud en una lista de investigaciones desacopladas y autocontenidas (`planSchema`).
+> 2. **Ejecutar en Paralelo (Fan-out):** Despacho concurrente de workers (`Promise.all`), reduciendo la latencia al tiempo del worker más lento (`t_total = max(t_i)`).
+> 3. **Integrar:** Un agente unificador compila los hallazgos en un reporte final y desduplica solapamientos.
+> - **Coste Oculto:** Los workers trabajan en silos y no se ven entre sí (un juego multiplataforma aparece en múltiples ramas). Por eso la fase 3 de integración es obligatoria.
 
+- **Código implementado:** [`src/patterns/10-parallelization/parallelization.ts`](./src/patterns/10-parallelization/parallelization.ts)
+- **Caso práctico:** Radar de lanzamientos de videojuegos en los próximos 90 días para Nintendo, PC, PlayStation y Xbox, contrastando agente único vs. arquitectura paralela.
 - **Estado:**
-  - [ ] Sección 13: Patrón Paralelización (89 - 95)
+  - [x] Sección 13: Patrón Paralelización (89 - 95)
 
 ---
 
 ### 🔹 Módulo 14: Patrón 11 — Human in the Loop (Humano en el Ciclo)
-> **Concepto:** Incorporación de **Approval Gates humanas** en operaciones de alto impacto o destructivas (transferencias, eliminación de datos, envío de correos a clientes). El agente suspende su ejecución, solicita confirmación y reanuda según el veredicto humano.
+> **Problema que resuelve:** Acciones con efectos irreversibles o de alto impacto financiero/operativo (ej. reembolsos de dinero, borrado de bases de datos, envíos masivos).  
+> **Mecanismo:** **Approval Gates Condicionales** nativas mediante `toolApproval` del Vercel AI SDK.
+> - **La decisión de diseño:** No es cómo pausar, sino **cuándo pausar**.
+> - **Compuerta inteligente:** Operaciones dentro de política (≤ 30 días) se autorizan y ejecutan automáticamente; solicitudes fuera de plazo disparan un `tool-approval-request`.
+> - **Intervención y Reanudación:** El bucle de ejecución se suspende, presenta al revisor un panel interactivo en terminal (`review`) con el contexto completo y reanuda enviando un `tool-approval-response` (aprobado o rechazado con motivo).
+> - **Libro Mayor (`LEDGER`):** Cada acción irreversible queda firmada de forma inmutable con su autorizador (`política (automático)` vs `humano:consola`).
 
+- **Código implementado:** [`src/patterns/11-human-loop/human-loop.ts`](./src/patterns/11-human-loop/human-loop.ts)
+- **Caso práctico:** Atención de tickets de soporte con solicitud de reembolsos en DevTalles.
 - **Estado:**
-  - [ ] Sección 14: Patrón Humano en el Ciclo (97 - 103)
+  - [x] Sección 14: Patrón Humano en el Ciclo (97 - 103)
 
 ---
 
 ### 🔹 Módulo 15: Cierre & Criterio Agéntico
-- [ ] Sección 15: Conclusiones y evaluación final de arquitecturas (105)
+> **Objetivo:** Consolidación de criterios de ingeniería para seleccionar la arquitectura adecuada según las restricciones del problema, evitando la sobre-ingeniería.
+
+- **Matriz de Criterio Agéntico:**
+  - **Prompting / Prompt Chaining:** Para tareas deterministas con transformaciones de formato y restricciones duras (longitud, formato, tono).
+  - **Tool Use / ReAct:** Para consultas dinámicas, flujos de descubrimiento y tareas con longitud de pasos indeterminada.
+  - **Plan and Execute:** Para flujos con pasos predecibles y herramientas independientes donde no se justifica el coste paso a paso de ReAct.
+  - **CodeAct:** Para cálculos analíticos, combinatoria y transformaciones de datos masivas en entornos sandbox seguros.
+  - **Router:** Para aislar contextos y especializar herramientas cuando el dominio es único por consulta.
+  - **Orchestrator-Workers:** Para peticiones heterogéneas que cruzan múltiples dominios en una sola interacción.
+  - **Parallelization:** Para abatir latencia en tareas ortogonales (investigación, comparación, consenso).
+  - **Human-in-the-Loop:** Imprescindible en cualquier efecto secundario irreversible o fuera de política predefinida.
+- **Estado:**
+  - [x] Sección 15: Conclusiones y evaluación final de arquitecturas (105)
 
 ---
 
@@ -226,9 +271,12 @@ A lo largo del código de los patrones se integran primitivas esenciales para pr
 | Mecanismo | Propósito en el Código |
 | :--- | :--- |
 | **Circuit Breakers** | Límites máximos de iteraciones y tokens para evitar bucles infinitos (`stepCountIs`). |
-| **Structured Outputs** | Garantía de esquemas mediante `zod` y `Output.object` para evitar respuestas rotas. |
-| **Auditores Deterministas** | Funciones regulares en TypeScript que auditan al modelo sin sesgos de LLM. |
-| **Approval Gates & Fallbacks** | Validación estricta con compuertas en código (ej. longitud, tipos) y recortes deterministas si se supera el tope de reintentos. |
-| **Isolation & Context Guarding** | Mantener prompts enfocados para evitar la dilución del contexto. |
+| **Structured Outputs** | Garantía estricta de esquemas y tipos mediante `zod` y `Output.object`. |
+| **Auditores Deterministas** | Funciones regulares en TypeScript que auditan al modelo sin sesgos ni complacencia de LLM. |
+| **Approval Gates & Fallbacks** | Validación con compuertas en código (longitud, reglas de negocio) y recortes deterministas. |
+| **Isolation & Tool Separation** | Evitar el agente todólogo entregando a cada worker únicamente herramientas disjuntas. |
+| **Code Sandboxing (`node:vm`)** | Aislamiento de ejecución para prevenir vulnerabilidades RCE en patrones CodeAct. |
+| **Conditional HITL Gates** | Suspensión del bucle agéntico en operaciones irreversibles condicionadas por reglas de negocio (`toolApproval`). |
+| **Immutable Ledger** | Trazabilidad y auditoría de efectos secundarios registrando quién autorizó cada acción. |
 
 ---
